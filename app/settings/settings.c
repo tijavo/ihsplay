@@ -15,7 +15,12 @@ void app_settings_init(app_settings_t *settings, const os_info_t *os_info) {
         commons_log_error("SS4S", "Can't load modules list: %s", strerror(errno));
     }
     settings->enable_input = true;
+#ifdef __WEBOS__
+    // The Magic Remote is an absolute pointer: forward its position and keep webOS' own pointer visible.
+    settings->relmouse = false;
+#else
     settings->relmouse = true;
+#endif
 
     SS4S_ModulePreferences preferences = {.audio_module = NULL, .video_module = NULL};
     SS4S_ModuleSelection selection = {.audio_module = NULL, .video_module = NULL};

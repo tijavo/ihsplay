@@ -14,6 +14,8 @@ const char *authorization_result_str(IHS_AuthorizationResult result) {
             return "Authorization timed out";
         case IHS_AuthorizationCanceled:
             return "Authorization cancelled";
+        case IHS_AuthorizationFailed:
+            return "Host rejected pairing (PIN check failed)";
         default:
             return "Unknown error";
     }
@@ -35,6 +37,9 @@ const char *streaming_result_str(IHS_StreamingResult result) {
         }
         case IHS_StreamingTimeout: {
             return "Request timed out";
+        }
+        case IHS_StreamingFailed: {
+            return "Host failed to start streaming";
         }
         default: {
             return "Unknown error";

@@ -2,6 +2,7 @@
 
 #include "app.h"
 #include "host_manager.h"
+#include "host_keys.h"
 
 #include "array_list.h"
 #include "util/refcounter.h"
@@ -107,6 +108,14 @@ array_list_t *host_manager_get_hosts(host_manager_t *manager) {
 }
 
 void host_manager_session_request(host_manager_t *manager, const IHS_HostInfo *host) {
+    // Steam negotiates a key per host when pairing; fall back to the device key for hosts paired before that.
+    uint8_t key[HOST_KEY_SIZE];
+    if (host_keys_load(host->clientId, key)) {
+        IHS_ClientSetSecretKey(manager->client, key);
+    } else {
+        IHS_ClientSetSecretKey(manager->client, manager->app->client_info.config.secretKey);
+    }
+    SDL_memset(key, 0, sizeof(key));
     IHS_StreamingRequest request = {
             .audioChannelCount = 2,
             .streamingEnable.audio = true,
@@ -144,8 +153,11 @@ static void client_host_discovered(IHS_Client *client, const IHS_HostInfo *host,
 
 static void client_authorization_success(IHS_Client *client, const IHS_HostInfo *host, uint64_t steamId,
                                          void *context) {
-    (void) client;
     host_manager_t *manager = context;
+    uint8_t key[HOST_KEY_SIZE];
+    IHS_ClientGetSecretKey(client, key);
+    host_keys_save(host->clientId, key);
+    SDL_memset(key, 0, sizeof(key));
     host_manager_authorization_result_t *result = SDL_calloc(1, sizeof(host_manager_authorization_result_t));
     result->host = *host;
     result->steam_id = steamId;

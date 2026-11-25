@@ -38,6 +38,28 @@ bool stream_input_handle_key_event(stream_manager_t *manager, const SDL_Keyboard
     return true;
 }
 
+/**
+ * Map a window position to the host's capture area (0..1 on both axes), accounting for the letterboxing
+ * applied when the stream's aspect ratio differs from the screen's.
+ */
+static void stream_input_map_to_capture(stream_manager_t *manager, int wx, int wy, float *x, float *y) {
+    int vw = manager->viewport_width, vh = manager->viewport_height;
+    if (vw <= 0 || vh <= 0) {
+        SDL_GetWindowSize(manager->app->ui->window, &vw, &vh);
+    }
+    float dst_x = 0, dst_y = 0, dst_w = (float) vw, dst_h = (float) vh;
+    if (manager->capture_width > 0 && manager->capture_height > 0) {
+        float scale = SDL_min((float) vw / (float) manager->capture_width,
+                              (float) vh / (float) manager->capture_height);
+        dst_w = (float) manager->capture_width * scale;
+        dst_h = (float) manager->capture_height * scale;
+        dst_x = ((float) vw - dst_w) / 2.0f;
+        dst_y = ((float) vh - dst_h) / 2.0f;
+    }
+    *x = SDL_clamp(((float) wx - dst_x) / dst_w, 0.0f, 1.0f);
+    *y = SDL_clamp(((float) wy - dst_y) / dst_h, 0.0f, 1.0f);
+}
+
 bool stream_input_handle_mouse_event(stream_manager_t *manager, const SDL_Event *event) {
     if (!manager->app->settings->enable_input) {
         return true;
@@ -50,10 +72,9 @@ bool stream_input_handle_mouse_event(stream_manager_t *manager, const SDL_Event 
             if (manager->app->settings->relmouse) {
                 IHS_SessionSendMouseMovement(manager->session, event->motion.xrel, event->motion.yrel);
             } else {
-                int w, h;
-                SDL_GetWindowSize(manager->app->ui->window, &w, &h);
-                IHS_SessionSendMousePosition(manager->session, (float) event->motion.x / (float) w,
-                                             (float) event->motion.y / (float) h);
+                float x, y;
+                stream_input_map_to_capture(manager, event->motion.x, event->motion.y, &x, &y);
+                IHS_SessionSendMousePosition(manager->session, x, y);
             }
             return true;
         }

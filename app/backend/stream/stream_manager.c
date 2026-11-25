@@ -398,7 +398,8 @@ static void grab_mouse(stream_manager_t *manager, bool grab) {
         SDL_SetRelativeMouseMode(SDL_FALSE);
         return;
     }
-    SDL_SetRelativeMouseMode(grab ? SDL_TRUE : SDL_FALSE);
+    // Absolute mode keeps the system pointer (e.g. the Magic Remote's) visible instead of capturing the mouse.
+    SDL_SetRelativeMouseMode(grab && manager->app->settings->relmouse ? SDL_TRUE : SDL_FALSE);
 }
 
 

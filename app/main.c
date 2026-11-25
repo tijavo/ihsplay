@@ -1,3 +1,8 @@
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
 #include <SDL.h>
 #include <lvgl.h>
 
@@ -184,6 +189,25 @@ static void process_events() {
 }
 
 static void logging_init() {
+    // Apps started by the TV's launcher have no visible stdout/stderr, and a private /tmp. A file named
+    // "debug" next to the executable makes the app write everything to "ihsplay.log" in the same directory.
+    char exe_dir[512];
+    ssize_t exe_len = readlink("/proc/self/exe", exe_dir, sizeof(exe_dir) - 1);
+    char *slash = exe_len > 0 ? memrchr(exe_dir, '/', exe_len) : NULL;
+    if (slash != NULL) {
+        *slash = '\0';
+        char marker[600], log_path[600];
+        snprintf(marker, sizeof(marker), "%s/debug", exe_dir);
+        snprintf(log_path, sizeof(log_path), "%s/ihsplay.log", exe_dir);
+        if (access(marker, F_OK) == 0) {
+            if (freopen(log_path, "w", stdout) != NULL) {
+                setvbuf(stdout, NULL, _IOLBF, 0);
+            }
+            if (freopen(log_path, "a", stderr) != NULL) {
+                setvbuf(stderr, NULL, _IOLBF, 0);
+            }
+        }
+    }
     commons_logging_init("ihsplay");
     lv_log_register_print_cb(commons_lv_log);
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);

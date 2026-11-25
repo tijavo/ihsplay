@@ -18,7 +18,6 @@
 >   stayed frozen. Stale packets are now dropped after 200 ms.
 > - **Magic Remote pointer.** On webOS the remote's pointer stays visible while
 >   streaming, and clicks go where the pointer is.
-> - **Clearer errors.** A rejected pairing says so instead of "Unknown error".
 > - **Debug log on webOS.** Create an empty file named `debug` next to the `ihsplay`
 >   executable, and the app writes its log to `ihsplay.log` in the same folder. Apps
 >   started from the TV menu have no other visible output.
@@ -26,7 +25,10 @@
 > **Streaming the whole desktop from a Linux host on Wayland:** Steam can only capture
 > the game or Big Picture window by default. When you switch to another window, the
 > picture freezes or the connection closes. Start Steam with `steam -pipewire` and
-> confirm the screen share dialog on the host.
+> confirm the screen share dialog on the host, this way you can stream the entire desktop.
+>
+> **Disclaimer:** The forks were vibe coded with Claude. 
+> I tried to keep the code clean and maintainable, but I know some dont like slop so be aware.
 
 ```
     ______  _______       __
